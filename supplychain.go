@@ -33,6 +33,7 @@ func (t *CFMSupplyChainChainCode) Query(stub shim.ChaincodeStubInterface, functi
 	return nil, nil
 }
 func main() {
+	logger.SetLevel(shim.LogInfo)
 	primitives.SetSecurityLevel("SHA3", 256)
 	err := shim.Start(new(CFMSupplyChainChainCode))
 	if err != nil {
