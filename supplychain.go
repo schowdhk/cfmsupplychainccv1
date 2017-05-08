@@ -37,22 +37,6 @@ type TrackingRecord struct {
 	Catetogy       string `json:"catetogy"`
 }
 
-// Init initializes the smart contracts
-func (t *CFMSupplyChainChainCode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	logger.Info("Init called")
-	//Place an empty arry
-	stub.PutState(ALL_ELEMENENTS, []byte("[]"))
-	return nil, nil
-}
-
-// Invoke entry point
-func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	logger.Info("Invoke called")
-	ext := CFMSupplyChainChainCode{}
-
-	ext.createShipment(stub, args)
-	return nil, nil
-}
 func (t *CFMSupplyChainChainCode) updateMasterRecords(stub shim.ChaincodeStubInterface, shipmentNumber string) error {
 	var recordList []string
 	recBytes, _ := stub.GetState(ALL_ELEMENENTS)
@@ -84,6 +68,23 @@ func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterfac
 	ext.updateMasterRecords(stub, shipmentNumber)
 	logger.Info("Received and unmarshaed the payload : " + payload)
 
+	return nil, nil
+}
+
+// Init initializes the smart contracts
+func (t *CFMSupplyChainChainCode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	logger.Info("Init called")
+	//Place an empty arry
+	stub.PutState(ALL_ELEMENENTS, []byte("[]"))
+	return nil, nil
+}
+
+// Invoke entry point
+func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	logger.Info("Invoke called")
+	ext := CFMSupplyChainChainCode{}
+
+	ext.createShipment(stub, args)
 	return nil, nil
 }
 
