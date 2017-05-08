@@ -48,28 +48,12 @@ func (t *CFMSupplyChainChainCode) Init(stub shim.ChaincodeStubInterface, functio
 // Invoke entry point
 func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Info("Invoke called")
+	ext := CFMSupplyChainChainCode{}
 
+	ext.createShipment(stub, args)
 	return nil, nil
 }
-
-// Creating a new shipment
-func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	logger.Info("createShipment called")
-
-	shimentNumber := args[0]
-	payload := args[1]
-	var shipmentRecord TrackingRecord
-	err := json.Unmarshal([]byte(payload), &shipmentRecord)
-	if err != nil {
-		return nil, errors.New("Failed to unmarshal createShipment ")
-	}
-	stub.PutState(shimentNumber, []byte(payload))
-
-	logger.Info("Received and unmarshaed the payload : " + payload)
-
-	return nil, nil
-}
-func (t *CFMSupplyChainChainCode) updateMasterReords(stub shim.ChaincodeStubInterface, shipmentNumber string) error {
+func (t *CFMSupplyChainChainCode) updateMasterRecords(stub shim.ChaincodeStubInterface, shipmentNumber string) error {
 	var recordList []string
 	recBytes, _ := stub.GetState(ALL_ELEMENENTS)
 
@@ -82,6 +66,25 @@ func (t *CFMSupplyChainChainCode) updateMasterReords(stub shim.ChaincodeStubInte
 	logger.Info("After addition" + string(bytesToStore))
 	stub.PutState(ALL_ELEMENENTS, bytesToStore)
 	return nil
+}
+
+// Creating a new shipment
+func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	logger.Info("createShipment called")
+
+	shipmentNumber := args[0]
+	payload := args[1]
+	var shipmentRecord TrackingRecord
+	err := json.Unmarshal([]byte(payload), &shipmentRecord)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal createShipment ")
+	}
+	stub.PutState(shipmentNumber, []byte(payload))
+	ext := CFMSupplyChainChainCode{}
+	ext.updateMasterRecords(stub, shipmentNumber)
+	logger.Info("Received and unmarshaed the payload : " + payload)
+
+	return nil, nil
 }
 
 // Init initializes the smart contracts
