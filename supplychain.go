@@ -83,8 +83,8 @@ func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterfac
 }
 
 func (t *CFMSupplyChainChainCode) updateRecord(existingRecord map[string]string, fieldsToUpdate map[string]string) (string, error) {
-	for _, key := range fieldsToUpdate {
-		value := fieldsToUpdate[key]
+	for key, value := range fieldsToUpdate {
+
 		existingRecord[key] = value
 	}
 	outputMapBytes, _ := json.Marshal(existingRecord)
