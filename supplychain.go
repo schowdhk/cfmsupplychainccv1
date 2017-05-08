@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -9,14 +11,37 @@ import (
 
 var logger = shim.NewLogger("CFMSupplyChainChainCode")
 
+const ALL_ELEMENENTS = "ALL_RECS"
+
 // Chaincode default interface
 type CFMSupplyChainChainCode struct {
+}
+type TrackingRecord struct {
+	ShipmentNumber string `json:"shipmentNumber"`
+	Date           string `json:"date"`
+	ShipmentWt     string `json:"shipmentWt"`
+	ShipType       string `json:"shipType"`
+	ShipSrc        string `json:"shipSrc"`
+	ShipDest       string `json:"shipDest"`
+	ShipingComp    string `json:"shipingComp"`
+	VehicleID      string `json:"vehicleId"`
+	SealNumber     string `json:"sealNumber"`
+	ContractNumber string `json:"contractNumber"`
+	ExpYield       string `json:"expYield"`
+	Type           string `json:"type"`
+	OreType        string `json:"oreType"`
+	SrcMine        string `json:"srcMine"`
+	ShipperRecvdWt string `json:"shipperRecvdWt"`
+	DestRecvdWt    string `json:"destRecvdWt"`
+	Status         string `json:"status"`
+	Catetogy       string `json:"catetogy"`
 }
 
 // Init initializes the smart contracts
 func (t *CFMSupplyChainChainCode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Info("Init called")
-
+	//Place an empty arry
+	stub.PutState(ALL_ELEMENENTS, []byte("[]"))
 	return nil, nil
 }
 
@@ -25,6 +50,38 @@ func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, funct
 	logger.Info("Invoke called")
 
 	return nil, nil
+}
+
+// Creating a new shipment
+func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	logger.Info("createShipment called")
+
+	shimentNumber := args[0]
+	payload := args[1]
+	var shipmentRecord TrackingRecord
+	err := json.Unmarshal([]byte(payload), &shipmentRecord)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal createShipment ")
+	}
+	stub.PutState(shimentNumber, []byte(payload))
+
+	logger.Info("Received and unmarshaed the payload : " + payload)
+
+	return nil, nil
+}
+func (t *CFMSupplyChainChainCode) updateMasterReords(stub shim.ChaincodeStubInterface, shipmentNumber string) error {
+	var recordList []string
+	recBytes, _ := stub.GetState(ALL_ELEMENENTS)
+
+	err := json.Unmarshal(recBytes, &recordList)
+	if err != nil {
+		return errors.New("Failed to unmarshal updateMasterReords ")
+	}
+	recordList = append(recordList, shipmentNumber)
+	bytesToStore, _ := json.Marshal(recordList)
+	logger.Info("After addition" + string(bytesToStore))
+	stub.PutState(ALL_ELEMENENTS, bytesToStore)
+	return nil
 }
 
 // Init initializes the smart contracts
