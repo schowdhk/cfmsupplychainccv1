@@ -51,6 +51,17 @@ func (t *CFMSupplyChainChainCode) updateMasterRecords(stub shim.ChaincodeStubInt
 	stub.PutState(ALL_ELEMENENTS, bytesToStore)
 	return nil
 }
+func (t *CFMSupplyChainChainCode) getAllRecordsList(stub shim.ChaincodeStubInterface) ([]string, error) {
+	var recordList []string
+	recBytes, _ := stub.GetState(ALL_ELEMENENTS)
+
+	err := json.Unmarshal(recBytes, &recordList)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal getAllRecordsList ")
+	}
+
+	return recordList, nil
+}
 
 // Creating a new shipment
 func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -71,6 +82,29 @@ func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterfac
 	return nil, nil
 }
 
+func (t *CFMSupplyChainChainCode) getShipmentWithStatus(stub shim.ChaincodeStubInterface, status string) ([]byte, error) {
+	logger.Info("getShipmentWithStatus called")
+	ext := CFMSupplyChainChainCode{}
+	recordsList, err := ext.getAllRecordsList(stub)
+	if err != nil {
+		return nil, errors.New("Unable to get all the records ")
+	}
+	var outputRecords []TrackingRecord
+	outputRecords = make([]TrackingRecord, 0)
+	for _, shipmentNumber := range recordsList {
+		logger.Info("getShipmentWithStatus: Processing record " + shipmentNumber)
+		recBytes, _ := stub.GetState(shipmentNumber)
+		var record TrackingRecord
+		json.Unmarshal(recBytes, &record)
+		if status == record.Status {
+			outputRecords = append(outputRecords, record)
+		}
+	}
+	outputBytes, _ := json.Marshal(outputRecords)
+	logger.Info("Returning records from getShipmentWithStatus " + string(outputBytes))
+	return outputBytes, nil
+}
+
 // Init initializes the smart contracts
 func (t *CFMSupplyChainChainCode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Info("Init called")
@@ -84,15 +118,24 @@ func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, funct
 	logger.Info("Invoke called")
 	ext := CFMSupplyChainChainCode{}
 
-	ext.createShipment(stub, args)
+	if function == "createShipment" {
+		ext.createShipment(stub, args)
+	}
+
 	return nil, nil
 }
 
-// Init initializes the smart contracts
+// Query the rcords form the  smart contracts
 func (t *CFMSupplyChainChainCode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	logger.Info("Query called")
+	ext := CFMSupplyChainChainCode{}
+	if function == "getAllRecordsByStatus" {
+		return ext.getShipmentWithStatus(stub, args[0])
+	}
 	return nil, nil
 }
+
+//Main method
 func main() {
 	logger.SetLevel(shim.LogInfo)
 	primitives.SetSecurityLevel("SHA3", 256)
