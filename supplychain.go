@@ -82,6 +82,39 @@ func (t *CFMSupplyChainChainCode) createShipment(stub shim.ChaincodeStubInterfac
 	return nil, nil
 }
 
+func (t *CFMSupplyChainChainCode) updateRecord(existingRecord map[string]string, fieldsToUpdate map[string]string) (string, error) {
+	for _, key := range fieldsToUpdate {
+		value := fieldsToUpdate[key]
+		existingRecord[key] = value
+	}
+	outputMapBytes, _ := json.Marshal(existingRecord)
+	logger.Info("updateRecord: Final json after update " + string(outputMapBytes))
+	return string(outputMapBytes), nil
+}
+
+// Update and existing shipment record
+func (t *CFMSupplyChainChainCode) updateShipment(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var existingRecMap map[string]string
+	var updatedFields map[string]string
+
+	logger.Info("updateShipment called ")
+	ext := CFMSupplyChainChainCode{}
+
+	shipmentNumber := args[0]
+	payload := args[1]
+	logger.Info("updateShipment payload passed " + payload)
+
+	//who :=args[2]
+	recBytes, _ := stub.GetState(shipmentNumber)
+
+	json.Unmarshal(recBytes, &existingRecMap)
+	json.Unmarshal([]byte(payload), &updatedFields)
+
+	updatedReord, _ := ext.updateRecord(existingRecMap, updatedFields)
+	//Store the records
+	stub.PutState(shipmentNumber, []byte(updatedReord))
+	return nil, nil
+}
 func (t *CFMSupplyChainChainCode) getShipmentWithStatus(stub shim.ChaincodeStubInterface, status string) ([]byte, error) {
 	logger.Info("getShipmentWithStatus called")
 	ext := CFMSupplyChainChainCode{}
@@ -120,6 +153,9 @@ func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, funct
 
 	if function == "createShipment" {
 		ext.createShipment(stub, args)
+	}
+	if function == "updateShipment" {
+		ext.updateShipment(stub, args)
 	}
 
 	return nil, nil
