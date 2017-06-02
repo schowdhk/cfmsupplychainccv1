@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/crypto/primitives"
@@ -160,6 +161,11 @@ func (t *CFMSupplyChainChainCode) Invoke(stub shim.ChaincodeStubInterface, funct
 
 	return nil, nil
 }
+func probe() []byte {
+	ts := time.Now().Format(time.UnixDate)
+	output := "{\"status\":\"Success\",\"ts\" : \"" + ts + "\" }"
+	return []byte(output)
+}
 
 // Query the rcords form the  smart contracts
 func (t *CFMSupplyChainChainCode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -167,6 +173,8 @@ func (t *CFMSupplyChainChainCode) Query(stub shim.ChaincodeStubInterface, functi
 	ext := CFMSupplyChainChainCode{}
 	if function == "getAllRecordsByStatus" {
 		return ext.getShipmentWithStatus(stub, args[0])
+	} else if function == "probe" {
+		return probe(), nil
 	}
 	return nil, nil
 }
